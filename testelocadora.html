@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <title>Locadora com Lista</title>
+  <style>
+    table, th, td { border: 1px solid black; border-collapse: collapse; }
+    th, td { padding: 8px; }
+  </style>
+</head>
+<body>
+
+  <h1>Video Locadora</h1>
+
+  <p>Título: <input type="text" id="titulo"></p>
+  <p>Duração (min): <input type="number" id="duracao"></p>
+  <button onclick="adicionarFilme()">Adicionar Filme</button>
+
+  <button onclick="fazerBackup()">Fazer Backup</button>
+
+  <input type="file" id="arquivoBackup" accept=".json" />
+<button onclick="restaurarBackup()">Restaurar Backup</button>
+
+  <h2>Filmes Salvos</h2>
+  <input type="text" id="pesquisa" placeholder="Pesquisar título..." onkeyup="mostrarFilmes()">
+  <table>
+    <thead>
+      <tr><th>Título</th><th>Duração</th></tr>
+    </thead>
+    <tbody id="lista-filmes"></tbody>
+  </table>
+
+<script>
+
+  // Função para fazer o backup dos filmes
+  function fazerBackup() {
+  const dados = localStorage.getItem("filmes"); // ou outra chave
+  const blob = new Blob([dados], { type: "application/json" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "backup-filmes.json";
+  link.click();
+}
+
+
+  // Função para restaurar o backup dos filmes
+  
+function restaurarBackup() {
+  const input = document.getElementById("arquivoBackup");
+  const file = input.files[0];
+
+  if (!file) {
+    alert("Selecione um arquivo primeiro.");
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const conteudo = e.target.result;
+    try {
+      JSON.parse(conteudo); // Testa se é JSON válido
+      localStorage.setItem("filmes", conteudo);
+      alert("Backup restaurado com sucesso!");
+      location.reload(); // Opcional: recarrega a página para atualizar os dados
+    } catch (error) {
+      alert("Arquivo inválido!");
+    }
+  };
+  reader.readAsText(file);
+}
+
+  // Coloque aqui todo o código de "testelocadora.js"
+  function carregarFilmes() {
+    const filmes = localStorage.getItem("filmes");
+    return filmes ? JSON.parse(filmes) : [];
+  }
+
+  function salvarFilmes(filmes) {
+    localStorage.setItem("filmes", JSON.stringify(filmes));
+  }
+
+  function adicionarFilme() {
+    const titulo = document.getElementById("titulo").value.trim();
+    const duracao = parseInt(document.getElementById("duracao").value);
+
+    if (!titulo || isNaN(duracao) || duracao <= 0) {
+      alert("Insira um título e duração válidos.");
+      return;
+    }
+
+    const filmes = carregarFilmes();
+    filmes.push({ titulo, duracao });
+    salvarFilmes(filmes);
+
+    document.getElementById("titulo").value = "";
+    document.getElementById("duracao").value = "";
+    mostrarFilmes();
+  }
+
+  function mostrarFilmes() {
+    const filtro = document.getElementById("pesquisa").value.toLowerCase();
+    const filmes = carregarFilmes();
+    const lista = document.getElementById("lista-filmes");
+
+    lista.innerHTML = "";
+
+    filmes
+      .filter(filme => filme.titulo.toLowerCase().includes(filtro))
+      .forEach(filme => {
+        const linha = document.createElement("tr");
+        linha.innerHTML = `
+          <td>${filme.titulo}</td>
+          <td>${Math.floor(filme.duracao / 60)}h ${filme.duracao % 60}min</td>
+        `;
+        lista.appendChild(linha);
+      });
+  }
+
+  window.onload = mostrarFilmes;
+</script>
+
+
+</body>
+</html>
